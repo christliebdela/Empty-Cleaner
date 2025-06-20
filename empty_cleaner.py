@@ -12,6 +12,23 @@ from send2trash import send2trash
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
+# Define modern color palette
+COLORS = {
+    "primary": "#4f46e5",    # Modern indigo
+    "primary_hover": "#4338ca",
+    "success": "#10b981",    # Modern emerald
+    "success_hover": "#059669",
+    "danger": "#ef4444",     # Modern red
+    "danger_hover": "#dc2626",
+    "neutral": "#6b7280",    # Modern gray
+    "neutral_hover": "#4b5563",
+    "bg_dark": "#1e1e1e",    # Dark background
+    "bg_light": "#f8fafc"    # Light background
+}
+
+# Define consistent corner radius
+CORNER_RADIUS = 6
+
 class EmptyCleaner:
     def __init__(self, root):
         self.root = root
@@ -40,22 +57,31 @@ class EmptyCleaner:
             font=ctk.CTkFont(size=20, weight="bold")
         )
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
-          # Directory selection
+          
+        # Directory selection
         self.dir_label = ctk.CTkLabel(self.sidebar_frame, text="Target Directory:")
         self.dir_label.grid(row=1, column=0, padx=20, pady=(10, 0), sticky="w")
         
         self.dir_var = ctk.StringVar()
-        self.dir_entry = ctk.CTkEntry(self.sidebar_frame, textvariable=self.dir_var, width=160)
+        self.dir_entry = ctk.CTkEntry(
+            self.sidebar_frame, 
+            textvariable=self.dir_var, 
+            width=160,
+            corner_radius=CORNER_RADIUS
+        )
         self.dir_entry.grid(row=2, column=0, padx=20, pady=(5, 0), sticky="ew")
         
         self.browse_button = ctk.CTkButton(
             self.sidebar_frame, 
             text="Browse...",
             command=self.browse_directory,
-            corner_radius=8
+            corner_radius=CORNER_RADIUS,
+            fg_color=COLORS["neutral"],
+            hover_color=COLORS["neutral_hover"]
         )
         self.browse_button.grid(row=3, column=0, padx=20, pady=(5, 0), sticky="ew")
-          # Action buttons
+          
+        # Action buttons
         self.button_frame = ctk.CTkFrame(self.sidebar_frame)
         self.button_frame.grid(row=5, column=0, padx=20, pady=20, sticky="ew")
         
@@ -63,9 +89,9 @@ class EmptyCleaner:
             self.button_frame,
             text="Scan Directory",
             command=self.scan_directory,
-            fg_color="#3a7ebf",
-            hover_color="#2a6da8",
-            corner_radius=8
+            fg_color=COLORS["primary"],
+            hover_color=COLORS["primary_hover"],
+            corner_radius=CORNER_RADIUS
         )
         self.scan_button.pack(fill="x", pady=(0, 5))
         
@@ -73,9 +99,9 @@ class EmptyCleaner:
             self.button_frame,
             text="Move to Recycle Bin",
             command=self.delete_empty,
-            fg_color="#2d8659",
-            hover_color="#1d7549",
-            corner_radius=8
+            fg_color=COLORS["success"],
+            hover_color=COLORS["success_hover"],
+            corner_radius=CORNER_RADIUS
         )
         self.delete_button.pack(fill="x", pady=5)
         
@@ -83,19 +109,20 @@ class EmptyCleaner:
             self.button_frame,
             text="Empty Recycle Bin",
             command=self.empty_recycle_bin,
-            fg_color="#963a3a",
-            hover_color="#862a2a",
-            corner_radius=8
+            fg_color=COLORS["danger"],
+            hover_color=COLORS["danger_hover"],
+            corner_radius=CORNER_RADIUS
         )
         self.empty_rb_button.pack(fill="x", pady=(5, 0))
-          # About button
+          
+        # About button
         self.about_button = ctk.CTkButton(
             self.sidebar_frame,
             text="About",
             command=self.show_about,
-            fg_color="#555555",
-            hover_color="#444444",
-            corner_radius=8
+            fg_color=COLORS["neutral"],
+            hover_color=COLORS["neutral_hover"],
+            corner_radius=CORNER_RADIUS
         )
         self.about_button.grid(row=6, column=0, padx=20, pady=(30, 0), sticky="ew")
         
@@ -105,13 +132,17 @@ class EmptyCleaner:
         self.appearance_mode_menu = ctk.CTkOptionMenu(
             self.sidebar_frame, 
             values=["Dark", "Light", "System"],
-            command=self.change_appearance_mode
+            command=self.change_appearance_mode,
+            corner_radius=CORNER_RADIUS,
+            fg_color=COLORS["primary"],
+            button_color=COLORS["primary_hover"],
+            button_hover_color=COLORS["primary_hover"]
         )
         self.appearance_mode_menu.grid(row=8, column=0, padx=20, pady=(5, 20))
         self.appearance_mode_menu.set("Dark")
         
         # Create main frame with color matching the title bar
-        self.main_frame = ctk.CTkFrame(root, fg_color=("#333333", "#1e1e1e"))
+        self.main_frame = ctk.CTkFrame(root, fg_color=COLORS["bg_dark"], corner_radius=CORNER_RADIUS)
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
         self.main_frame.grid_columnconfigure(0, weight=1)
         self.main_frame.grid_rowconfigure(1, weight=1)
@@ -120,12 +151,19 @@ class EmptyCleaner:
         self.header_label = ctk.CTkLabel(
             self.main_frame, 
             text="Scan results:",
-            font=ctk.CTkFont(size=16, weight="bold")
+            font=ctk.CTkFont(size=18, weight="bold")
         )
-        self.header_label.grid(row=0, column=0, sticky="w", padx=10, pady=(10, 0))
+        self.header_label.grid(row=0, column=0, sticky="w", padx=15, pady=(15, 0))
         
         # Create the results frame with tabview
-        self.results_frame = ctk.CTkTabview(self.main_frame)
+        self.results_frame = ctk.CTkTabview(
+            self.main_frame,
+            corner_radius=CORNER_RADIUS,
+            segmented_button_fg_color=COLORS["neutral"],
+            segmented_button_selected_color=COLORS["primary"],
+            segmented_button_selected_hover_color=COLORS["primary_hover"],
+            segmented_button_unselected_hover_color=COLORS["neutral_hover"]
+        )
         self.results_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
         
         # Add tabs for files and folders
@@ -139,16 +177,25 @@ class EmptyCleaner:
         self.tab_folders.grid_rowconfigure(0, weight=1)
         
         # Create scrollable frames for each tab
-        self.files_scrollable_frame = ctk.CTkScrollableFrame(self.tab_files)
+        self.files_scrollable_frame = ctk.CTkScrollableFrame(
+            self.tab_files,
+            corner_radius=CORNER_RADIUS
+        )
         self.files_scrollable_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         self.files_scrollable_frame.grid_columnconfigure(0, weight=1)
         
-        self.folders_scrollable_frame = ctk.CTkScrollableFrame(self.tab_folders)
+        self.folders_scrollable_frame = ctk.CTkScrollableFrame(
+            self.tab_folders,
+            corner_radius=CORNER_RADIUS
+        )
         self.folders_scrollable_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         self.folders_scrollable_frame.grid_columnconfigure(0, weight=1)
         
         # Status and progress
-        self.status_frame = ctk.CTkFrame(self.main_frame)
+        self.status_frame = ctk.CTkFrame(
+            self.main_frame, 
+            corner_radius=CORNER_RADIUS
+        )
         self.status_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=(0, 10))
         self.status_frame.grid_columnconfigure(0, weight=1)
         
@@ -158,10 +205,14 @@ class EmptyCleaner:
             textvariable=self.status_var,
             anchor="w"
         )
-        self.status_label.grid(row=0, column=0, sticky="w", padx=5, pady=(5, 0))
+        self.status_label.grid(row=0, column=0, sticky="w", padx=10, pady=(8, 0))
         
-        self.progress = ctk.CTkProgressBar(self.status_frame)
-        self.progress.grid(row=1, column=0, sticky="ew", padx=5, pady=(5, 5))
+        self.progress = ctk.CTkProgressBar(
+            self.status_frame,
+            corner_radius=CORNER_RADIUS,
+            progress_color=COLORS["primary"]
+        )
+        self.progress.grid(row=1, column=0, sticky="ew", padx=10, pady=(8, 8))
         self.progress.set(0)
         
         # Empty files and folders lists
@@ -172,6 +223,12 @@ class EmptyCleaner:
     
     def change_appearance_mode(self, new_appearance_mode):
         ctk.set_appearance_mode(new_appearance_mode.lower())
+        
+        # Update main frame background color based on appearance mode
+        if new_appearance_mode.lower() == "light":
+            self.main_frame.configure(fg_color=COLORS["bg_light"])
+        else:
+            self.main_frame.configure(fg_color=COLORS["bg_dark"])
     
     def browse_directory(self):
         directory = filedialog.askdirectory()
@@ -271,7 +328,10 @@ class EmptyCleaner:
     def _add_file_to_ui(self, file_path):
         try:
             # Create frame for this item
-            frame = ctk.CTkFrame(self.files_scrollable_frame)
+            frame = ctk.CTkFrame(
+                self.files_scrollable_frame, 
+                corner_radius=CORNER_RADIUS
+            )
             frame.pack(fill="x", padx=5, pady=2)
             
             # Get file details
@@ -286,16 +346,17 @@ class EmptyCleaner:
                 wraplength=500,
                 justify="left"
             )
-            label.pack(fill="x", padx=5, pady=2, anchor="w")
+            label.pack(fill="x", padx=10, pady=(8, 2), anchor="w")
             
             # Add details in smaller font
             details_label = ctk.CTkLabel(
                 frame,
                 text=f"Modified: {mod_time}",
                 font=ctk.CTkFont(size=10),
-                anchor="w"
+                anchor="w",
+                text_color=COLORS["neutral"]
             )
-            details_label.pack(fill="x", padx=5, pady=(0, 2), anchor="w")
+            details_label.pack(fill="x", padx=10, pady=(0, 8), anchor="w")
             
             # Store the widget reference
             self.file_widgets.append(frame)
@@ -310,7 +371,10 @@ class EmptyCleaner:
     def _add_folder_to_ui(self, folder_path):
         try:
             # Create frame for this item
-            frame = ctk.CTkFrame(self.folders_scrollable_frame)
+            frame = ctk.CTkFrame(
+                self.folders_scrollable_frame,
+                corner_radius=CORNER_RADIUS
+            )
             frame.pack(fill="x", padx=5, pady=2)
             
             # Get folder details
@@ -325,16 +389,17 @@ class EmptyCleaner:
                 wraplength=500,
                 justify="left"
             )
-            label.pack(fill="x", padx=5, pady=2, anchor="w")
+            label.pack(fill="x", padx=10, pady=(8, 2), anchor="w")
             
             # Add details in smaller font
             details_label = ctk.CTkLabel(
                 frame,
                 text=f"Modified: {mod_time}",
                 font=ctk.CTkFont(size=10),
-                anchor="w"
+                anchor="w",
+                text_color=COLORS["neutral"]
             )
-            details_label.pack(fill="x", padx=5, pady=(0, 2), anchor="w")
+            details_label.pack(fill="x", padx=10, pady=(0, 8), anchor="w")
             
             # Store the widget reference
             self.folder_widgets.append(frame)
@@ -468,81 +533,125 @@ class EmptyCleaner:
         # Hide the tabview
         self.results_frame.grid_remove()
         
-        # Create about frame
-        self.about_frame = ctk.CTkFrame(self.main_frame)
+        # Create about frame with scrollable content
+        self.about_frame = ctk.CTkScrollableFrame(
+            self.main_frame, 
+            corner_radius=CORNER_RADIUS
+        )
         self.about_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
         self.about_frame.grid_columnconfigure(0, weight=1)
         
-        # Title
+        # Content container for center alignment
+        content_frame = ctk.CTkFrame(self.about_frame, fg_color="transparent")
+        content_frame.pack(fill="x", expand=True, padx=20)
+        content_frame.grid_columnconfigure(0, weight=1)
+        
+        # Logo/Icon (could add an image here in the future)
         title_label = ctk.CTkLabel(
-            self.about_frame, 
+            content_frame, 
             text="Empty Cleaner",
-            font=ctk.CTkFont(size=24, weight="bold")
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color=COLORS["primary"]
         )
-        title_label.pack(pady=(20, 5))
+        title_label.pack(pady=(30, 5))
         
         # Version
         version_label = ctk.CTkLabel(
-            self.about_frame, 
-            text="Version 1.0",
-            font=ctk.CTkFont(size=14)
+            content_frame, 
+            text="Version 1.0.1",
+            font=ctk.CTkFont(size=14),
+            text_color=COLORS["neutral"]
         )
-        version_label.pack(pady=(0, 20))
-          # Description
+        version_label.pack(pady=(0, 25))
+        
+        # Description
         desc_text = (
-            "Empty Cleaner is a powerful utility designed to efficiently identify and manage empty files and folders "
-            "within your file system. It safely sends items to the recycle bin rather than permanently deleting them, "
-            "allowing you to clean up unnecessary empty items while maintaining the ability to recover them if needed."
+            "Empty Cleaner is a modern utility that helps you maintain a clean file system by "
+            "identifying and managing empty files and folders. With a simple, intuitive interface, "
+            "you can quickly scan directories and safely move empty items to the recycle bin."
         )
         desc_label = ctk.CTkLabel(
-            self.about_frame, 
+            content_frame, 
             text=desc_text,
-            font=ctk.CTkFont(size=12),
-            wraplength=460,
+            font=ctk.CTkFont(size=13),
+            wraplength=500,
             justify="center"
         )
-        desc_label.pack(pady=10)
+        desc_label.pack(pady=10, padx=30)
+        
+        # Features frame
+        features_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        features_frame.pack(pady=15, fill="x")
+        features_frame.grid_columnconfigure(0, weight=1)
+        
+        features_title = ctk.CTkLabel(
+            features_frame,
+            text="Key Features:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            anchor="center"
+        )
+        features_title.pack(pady=(0, 5))
+        
+        features_text = (
+            "• Fast directory scanning\n"
+            "• Safe cleanup with recycle bin integration\n"
+            "• Modern UI with light/dark mode support\n"
+            "• Simple, intuitive workflow"
+        )
+        features_list = ctk.CTkLabel(
+            features_frame,
+            text=features_text,
+            font=ctk.CTkFont(size=13),
+            justify="center"
+        )
+        features_list.pack(padx=10)
         
         # Creator info
         creator_label = ctk.CTkLabel(
-            self.about_frame, 
-            text="Created by: Christlieb Dela",
-            font=ctk.CTkFont(size=12),
+            content_frame, 
+            text="Created by Christlieb Dela",
+            font=ctk.CTkFont(size=13),
             justify="center"
         )
-        creator_label.pack(pady=(20, 5))
+        creator_label.pack(pady=(25, 5))
         
         # GitHub link
         github_text = "GitHub: https://github.com/christliebdela"
         github_label = ctk.CTkLabel(
-            self.about_frame, 
+            content_frame, 
             text=github_text,
-            font=ctk.CTkFont(size=12),
-            justify="center"
+            font=ctk.CTkFont(size=13),
+            justify="center",
+            text_color=COLORS["primary"]
         )
-        github_label.pack(pady=5)
-          # Open source notice
+        github_label.pack(pady=2)
+        
+        # Open source notice
         opensource_text = (
-            "This is an open source tool. Contributions are welcome!\n"
-            "Repository: https://github.com/christliebdela/Empty-Cleaner"
+            "This is an open source project licensed under MIT.\n"
+            "Contributions are welcome at: github.com/christliebdela/Empty-Cleaner"
         )
         opensource_label = ctk.CTkLabel(
-            self.about_frame, 
+            content_frame, 
             text=opensource_text,
             font=ctk.CTkFont(size=12),
             wraplength=460,
-            justify="center"
+            justify="center",
+            text_color=COLORS["neutral"]
         )
-        opensource_label.pack(pady=20)
+        opensource_label.pack(pady=10)
         
         # Back button to return to scan view
-        back_button = ctk.CTkButton(            self.about_frame,
+        back_button = ctk.CTkButton(
+            content_frame,
             text="Back to Scan",
             command=self.show_scan_view,
-            width=120,
-            corner_radius=8
+            width=150,
+            corner_radius=CORNER_RADIUS,
+            fg_color=COLORS["primary"],
+            hover_color=COLORS["primary_hover"]
         )
-        back_button.pack(pady=10)
+        back_button.pack(pady=(20, 30))
         
         # Update status
         self.status_var.set("About Empty Cleaner")
@@ -559,9 +668,17 @@ class EmptyCleaner:
         self.results_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
         
         # Update status
-        self.status_var.set("Ready to scan.")
+        self.status_var.set("Ready to scan")
 
 if __name__ == "__main__":
-    root = ctk.CTk()
-    app = EmptyCleaner(root)
-    root.mainloop()
+    try:
+        print("Starting Empty Cleaner application...")
+        root = ctk.CTk()
+        app = EmptyCleaner(root)
+        print("Application initialized successfully. If you don't see a window, check if it's minimized or behind other windows.")
+        root.mainloop()
+    except Exception as e:
+        print(f"Error initializing the application: {e}")
+        import traceback
+        traceback.print_exc()
+        input("Press Enter to exit...")  # Keeps the console window open to view errors
