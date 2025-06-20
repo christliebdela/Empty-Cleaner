@@ -9,10 +9,15 @@ __pycache__/
 *$py.class
 
 # Distribution / packaging
-dist/
 build/
+dist/
 *.egg-info/
 *.egg
+*.spec
+EmptyCleaner-Release/
+EmptyCleaner-v*.zip
+EmptyCleaner-Latest.zip
+EmptyCleanerSetup.exe
 
 # IDE files
 .idea/
@@ -32,4 +37,5 @@ Thumbs.db
 # Logs
 *.log
 
+# Backup folder
 backup/
