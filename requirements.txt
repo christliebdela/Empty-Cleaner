@@ -1,0 +1,4 @@
+winshell
+send2trash
+pywin32
+customtkinter
