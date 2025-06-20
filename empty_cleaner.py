@@ -8,25 +8,22 @@ from tkinter import filedialog, messagebox
 from datetime import datetime
 from send2trash import send2trash
 
-# Set appearance mode and default color theme
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
-# Define modern color palette
 COLORS = {
-    "primary": "#4f46e5",    # Modern indigo
+    "primary": "#4f46e5",    
     "primary_hover": "#4338ca",
-    "success": "#10b981",    # Modern emerald
+    "success": "#10b981",    
     "success_hover": "#059669",
-    "danger": "#ef4444",     # Modern red
+    "danger": "#ef4444",     
     "danger_hover": "#dc2626",
-    "neutral": "#6b7280",    # Modern gray
+    "neutral": "#6b7280",    
     "neutral_hover": "#4b5563",
-    "bg_dark": "#1e1e1e",    # Dark background
-    "bg_light": "#f8fafc"    # Light background
+    "bg_dark": "#1e1e1e",    
+    "bg_light": "#f8fafc"    
 }
 
-# Define consistent corner radius
 CORNER_RADIUS = 6
 
 class EmptyCleaner:
@@ -36,29 +33,24 @@ class EmptyCleaner:
         self.root.geometry("1000x600")
         self.root.minsize(800, 500)
         
-        # Set application icon
         icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "clean.ico")
         if os.path.exists(icon_path):
             self.root.iconbitmap(icon_path)
         
-        # Configure the grid layout
         self.root.grid_columnconfigure(1, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
         
-        # Create sidebar frame
         self.sidebar_frame = ctk.CTkFrame(root, width=200, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(4, weight=1)
         
-        # App logo/title
         self.logo_label = ctk.CTkLabel(
             self.sidebar_frame, 
             text="Empty Cleaner",
             font=ctk.CTkFont(size=20, weight="bold")
-        )
+        )        
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
           
-        # Directory selection
         self.dir_label = ctk.CTkLabel(self.sidebar_frame, text="Target Directory:")
         self.dir_label.grid(row=1, column=0, padx=20, pady=(10, 0), sticky="w")
         
@@ -81,7 +73,6 @@ class EmptyCleaner:
         )
         self.browse_button.grid(row=3, column=0, padx=20, pady=(5, 0), sticky="ew")
           
-        # Action buttons
         self.button_frame = ctk.CTkFrame(self.sidebar_frame)
         self.button_frame.grid(row=5, column=0, padx=20, pady=20, sticky="ew")
         
@@ -272,37 +263,39 @@ class EmptyCleaner:
         self.root.update_idletasks()
         
         try:
-            # Get all files and folders
             all_items = []
             for root, dirs, files in os.walk(directory):
+                # Skip system directories that often cause permission errors
+                dirs[:] = [d for d in dirs if not self._is_system_dir(os.path.join(root, d))]
+                
                 for dir_name in dirs:
                     dir_path = os.path.join(root, dir_name)
                     all_items.append(dir_path)
                 
                 for file_name in files:
                     file_path = os.path.join(root, file_name)
-                    all_items.append(file_path)
+                    if not self._is_system_file(file_path):
+                        all_items.append(file_path)
             
             total_items = len(all_items)
             processed = 0
             
-            # Check each item
             for item_path in all_items:
-                if os.path.isfile(item_path):
-                    if os.path.getsize(item_path) == 0:
-                        self.empty_files.append(item_path)
-                        # Add to UI in the main thread
-                        self.root.after(0, lambda p=item_path: self._add_file_to_ui(p))
-                else:  # It's a directory
-                    # Check if directory is empty (no files or subdirectories)
-                    if not os.listdir(item_path):
-                        self.empty_folders.append(item_path)
-                        # Add to UI in the main thread
-                        self.root.after(0, lambda p=item_path: self._add_folder_to_ui(p))
+                try:
+                    if os.path.isfile(item_path):
+                        if os.path.getsize(item_path) == 0:
+                            self.empty_files.append(item_path)
+                            self.root.after(0, lambda p=item_path: self._add_file_to_ui(p))
+                    else:  # It's a directory
+                        if os.path.exists(item_path) and not os.listdir(item_path):
+                            self.empty_folders.append(item_path)
+                            self.root.after(0, lambda p=item_path: self._add_folder_to_ui(p))
+                except (PermissionError, OSError):
+                    # Skip files/folders we don't have permission to access
+                    pass
                 
-                # Update progress
                 processed += 1
-                progress_value = processed / total_items
+                progress_value = processed / total_items if total_items > 0 else 1
                 self.root.after(0, lambda v=progress_value: self.progress.set(v))
                 
                 # Update status every 100 items to avoid GUI freezing
@@ -324,6 +317,49 @@ class EmptyCleaner:
         
         finally:
             self.root.after(0, lambda: self.progress.set(1))
+    
+    def _is_system_dir(self, path):
+        system_dirs = [
+            "System Volume Information",
+            "$Recycle.Bin", 
+            "$RECYCLE.BIN",
+            "Config.Msi",
+            "Windows",
+            "ProgramData",
+            "Program Files",
+            "Program Files (x86)",
+            "WinSxS",
+            "Temp",
+            "Recovery"
+        ]
+        
+        path_lower = path.lower()
+        for sys_dir in system_dirs:
+            if sys_dir.lower() in path_lower.split(os.sep):
+                return True
+            
+        try:
+            return bool(os.stat(path).st_file_attributes & 0x4)  # Check for FILE_ATTRIBUTE_SYSTEM
+        except (AttributeError, OSError):
+            return False
+    
+    def _is_system_file(self, path):
+        system_files = [
+            "pagefile.sys",
+            "hiberfil.sys",
+            "swapfile.sys",
+            "desktop.ini",
+            "thumbs.db"
+        ]
+        
+        file_name = os.path.basename(path).lower()
+        if file_name in [s.lower() for s in system_files]:
+            return True
+            
+        try:
+            return bool(os.stat(path).st_file_attributes & 0x4)  # Check for FILE_ATTRIBUTE_SYSTEM
+        except (AttributeError, OSError):
+            return False
     
     def _add_file_to_ui(self, file_path):
         try:
@@ -640,8 +676,7 @@ class EmptyCleaner:
             text_color=COLORS["neutral"]
         )
         opensource_label.pack(pady=10)
-        
-        # Back button to return to scan view
+          # Back button to return to scan view
         back_button = ctk.CTkButton(
             content_frame,
             text="Back to Scan",
@@ -655,20 +690,115 @@ class EmptyCleaner:
         
         # Update status
         self.status_var.set("About Empty Cleaner")
-    
+        
     def show_scan_view(self):
         # Remove the about frame if it exists
         if hasattr(self, 'about_frame'):
             self.about_frame.destroy()
+            delattr(self, 'about_frame')
         
-        # Update header
         self.header_label.configure(text="Scan Results")
         
-        # Show the tabview again
+        # Make sure the results frame is recreated if it doesn't exist anymore
+        if not hasattr(self, 'results_frame') or not self.results_frame.winfo_exists():
+            # Recreate the results frame with tabview
+            self.results_frame = ctk.CTkTabview(
+                self.main_frame,
+                corner_radius=CORNER_RADIUS,
+                segmented_button_fg_color=COLORS["neutral"],
+                segmented_button_selected_color=COLORS["primary"],
+                segmented_button_selected_hover_color=COLORS["primary_hover"],
+                segmented_button_unselected_hover_color=COLORS["neutral_hover"]
+            )
+            
+        # Make sure the tabview is visible
         self.results_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
         
-        # Update status
-        self.status_var.set("Ready to scan")
+        # Try to get the active tab first
+        active_tab = None
+        try:
+            active_tab = self.results_frame.get()
+        except Exception:
+            pass
+        
+        # Remove all existing tabs in a safe way
+        try:
+            tab_list = list(self.results_frame._tab_dict.keys())
+            for tab in tab_list:
+                try:
+                    self.results_frame._segmented_button.delete(tab)
+                except Exception:
+                    pass
+            
+            # Clear the tab dictionary
+            self.results_frame._tab_dict.clear()
+        except Exception:
+            # If there's an error with tab removal, recreate the entire tabview
+            self.results_frame.destroy()
+            self.results_frame = ctk.CTkTabview(
+                self.main_frame,
+                corner_radius=CORNER_RADIUS,
+                segmented_button_fg_color=COLORS["neutral"],
+                segmented_button_selected_color=COLORS["primary"],
+                segmented_button_selected_hover_color=COLORS["primary_hover"],
+                segmented_button_unselected_hover_color=COLORS["neutral_hover"]
+            )
+            self.results_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+        
+        # Recreate the tabs
+        self.tab_files = self.results_frame.add("Empty Files")
+        self.tab_folders = self.results_frame.add("Empty Folders")
+        
+        # Configure tabs
+        self.tab_files.grid_columnconfigure(0, weight=1)
+        self.tab_files.grid_rowconfigure(0, weight=1)
+        self.tab_folders.grid_columnconfigure(0, weight=1)
+        self.tab_folders.grid_rowconfigure(0, weight=1)
+        
+        # Create scrollable frames for each tab
+        self.files_scrollable_frame = ctk.CTkScrollableFrame(
+            self.tab_files,
+            corner_radius=CORNER_RADIUS
+        )
+        self.files_scrollable_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.files_scrollable_frame.grid_columnconfigure(0, weight=1)
+        
+        self.folders_scrollable_frame = ctk.CTkScrollableFrame(
+            self.tab_folders,
+            corner_radius=CORNER_RADIUS
+        )
+        self.folders_scrollable_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.folders_scrollable_frame.grid_columnconfigure(0, weight=1)
+        
+        # Reset widget lists
+        self.file_widgets = []
+        self.folder_widgets = []
+        
+        # Redisplay any existing results
+        for file_path in self.empty_files:
+            self._add_file_to_ui(file_path)
+            
+        for folder_path in self.empty_folders:
+            self._add_folder_to_ui(folder_path)
+        
+        # Set the active tab
+        if active_tab and active_tab in ["Empty Files", "Empty Folders"]:
+            self.results_frame.set(active_tab)
+        elif len(self.empty_folders) > 0 and len(self.empty_files) == 0:
+            self.results_frame.set("Empty Folders")
+        else:
+            self.results_frame.set("Empty Files")
+        
+        # Force update to ensure UI reflects changes
+        self.root.update_idletasks()
+        
+        # Update status based on whether we have results
+        if len(self.empty_files) > 0 or len(self.empty_folders) > 0:
+            total_empty = len(self.empty_files) + len(self.empty_folders)
+            self.status_var.set(
+                f"Scan results restored. Found {total_empty} empty items ({len(self.empty_files)} files, {len(self.empty_folders)} folders).")
+        else:
+            self.status_var.set("Ready to scan")
 
 if __name__ == "__main__":
     try:
