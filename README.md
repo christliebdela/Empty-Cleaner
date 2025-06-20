@@ -1,10 +1,9 @@
 # Empty Cleaner
 
-A modern, user-friendly tool with a dark theme that scans your chosen directory for empty files and folders, and helps you clean them up safely by sending them to the recycle bin.
+A modern, user-friendly tool  that scans your chosen directory for empty files and folders, and helps you clean them up safely by sending them to the recycle bin.
 
 ## Features
 
-- **Modern UI**: Dark-themed interface built with CustomTkinter for a sleek appearance.
 - **Scan for Empty Files and Folders**: Find all empty files and folders in the selected directory.
 - **Move to Recycle Bin**: Send empty items to the recycle bin with confirmation.
 - **Empty Recycle Bin**: Permanently remove all items from your recycle bin.
